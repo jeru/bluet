@@ -24,7 +24,9 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
-dependencies = []
+dependencies = [
+  "bumble",
+]
 
 [project.urls]
 Documentation = "https://github.com/unknown/bluet#readme"
@@ -38,6 +40,8 @@ path = "src/bluet/__about__.py"
 dependencies = [
   "coverage[toml]>=6.5",
   "pytest",
+  "pytest-asyncio",
+  "pytest-subprocess",
 ]
 [tool.hatch.envs.default.scripts]
 test = "pytest {args:tests}"
