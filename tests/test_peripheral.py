@@ -20,6 +20,7 @@ from bumble.device import Device, DeviceConfiguration
 from bumble.link import LocalLink
 
 from bluet.central import scan_and_connect
+from bluet.peripheral import advertise_until_connected
 from bluet.tester_device import create_tester_device
 
 
@@ -50,27 +51,17 @@ async def central_device(link) -> Device:
 
 
 @pytest.mark.asyncio
-async def test_scan_and_connect_normal(peripheral_device, central_device):
-    await peripheral_device.start_advertising()
-    conn, auth_req = await scan_and_connect(central_device)
-    assert conn.self_address == central_device.random_address
-    assert conn.peer_address == peripheral_device.random_address
-
-
-@pytest.mark.asyncio
-async def test_scan_and_connect_no_auth_req(peripheral_device, central_device):
-    await peripheral_device.start_advertising()
-    conn, auth_req = await scan_and_connect(central_device)
+async def test_advertise_until_connected_no_reply(peripheral_device):
     with pytest.raises(TimeoutError):
-        await asyncio.wait_for(auth_req, timeout=1.0)
-    assert conn.self_address == central_device.random_address
-    assert conn.peer_address == peripheral_device.random_address
+        await asyncio.wait_for(advertise_until_connected(peripheral_device), timeout=1.0)
 
 
 @pytest.mark.asyncio
-async def test_scan_and_connect_peripheral_pairing(peripheral_device, central_device):
-    await peripheral_device.start_advertising()
-    _, auth_req = await scan_and_connect(central_device)
-    [conn1] = peripheral_device.connections.values()
-    peripheral_device.smp_manager.request_pairing(conn1)
-    await auth_req
+async def test_advertise_until_connected_normal(peripheral_device, central_device):
+    conn1, (conn2, _) = await asyncio.gather(
+        advertise_until_connected(peripheral_device), scan_and_connect(central_device)
+    )
+    assert conn1.self_address == peripheral_device.random_address
+    assert conn1.peer_address == central_device.random_address
+    assert conn2.self_address == central_device.random_address
+    assert conn2.peer_address == peripheral_device.random_address

@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import asyncio
-from typing import Awaitable
 
 from bumble.device import Connection, Device
 
@@ -52,6 +51,7 @@ async def scan_and_connect(device: Device) -> (Connection, asyncio.Future[int]):
 
     def security_request(auth_req):
         auth_req_fut.set_result(auth_req)
+
     connect.on("security_request", security_request)
 
     return (connect, auth_req_fut)
