@@ -14,7 +14,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import asyncio
+import contextlib
+import logging
+from typing import TYPE_CHECKING, Callable
 
 from bumble.controller import Controller
 
@@ -43,7 +46,7 @@ class BumbledProcess:
     """
 
     _initializer: Awaitable[None]
-    _closed: bool
+    _stdout_task: asyncio.Task | None
 
     transport: Transport | None
     controller: Controller | None
@@ -62,7 +65,7 @@ class BumbledProcess:
                 raise
 
         self._initializer = init()
-        self._closed = False
+        self._stdout_task = False
         self.transport = None
         self.controller = None
         self.process = None
@@ -80,6 +83,10 @@ class BumbledProcess:
             await initializer
 
     async def close(self):
+        if self._stdout_task:
+            with contextlib.suppress(asyncio.CancelledError):
+                self._stdout_task.cancel()
+            self._stdout_task = None
         if self.process:
             self.process.terminate()
             await self.process.wait()
@@ -89,3 +96,25 @@ class BumbledProcess:
         if self.transport:
             await self.transport.close()
             self.transport = None
+
+    def start_monitoring_stdout(self, process_line: Callable[str, None] | None = None):
+        """Replays the process stdout to debugging.
+
+        An optional function `process_line` can be provided to do something on each line."""
+        if self._stdout_task:
+            msg = "Already started monitoring stdout."
+            raise RuntimeError(msg)
+        stdout = self.process.stdout
+
+        async def read():
+            while True:
+                logging.debug("Read line")
+                raw_line = await stdout.readline()
+                if not raw_line:
+                    break
+                line = raw_line.decode("utf-8")
+                if process_line:
+                    process_line(line)
+                logging.debug("-----STDOUT----- %s", line)
+
+        self._stdout_task = asyncio.create_task(read())
