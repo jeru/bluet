@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    name: build, test, publish
+    name: build, test
     runs-on: ubuntu-latest
     environment: release
     permissions:
@@ -40,5 +40,3 @@ jobs:
       run: hatch build
     - name: Test with hatch
       run: hatch run test
-    - name: Publish package distributions to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
