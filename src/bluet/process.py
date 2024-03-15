@@ -108,7 +108,6 @@ class BumbledProcess:
 
         async def read():
             while True:
-                logging.debug("Read line")
                 raw_line = await stdout.readline()
                 if not raw_line:
                     break
