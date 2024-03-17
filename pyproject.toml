@@ -5,11 +5,11 @@ build-backend = "hatchling.build"
 [project]
 name = "bluet"
 dynamic = ["version"]
-description = ''
+description = "A unit-test library and setup for embedded bluetooth testing."
 readme = "README.md"
 requires-python = ">=3.8"
 license = "Apache-2.0"
-keywords = []
+keywords = ["bluetooth", "ble", "test", "unit-test", "mock"]
 authors = [
   { name = "Cheng Sheng", email = "jeru.sheng@gmail.com" },
 ]
