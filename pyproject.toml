@@ -29,9 +29,8 @@ dependencies = [
 ]
 
 [project.urls]
-Documentation = "https://github.com/unknown/bluet#readme"
-Issues = "https://github.com/unknown/bluet/issues"
-Source = "https://github.com/unknown/bluet"
+Issues = "https://github.com/jeru/bluet/issues"
+Source = "https://github.com/jeru/bluet"
 
 [tool.hatch.version]
 path = "src/bluet/__about__.py"
