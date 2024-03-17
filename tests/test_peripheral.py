@@ -52,7 +52,7 @@ async def central_device(link) -> Device:
 
 @pytest.mark.asyncio
 async def test_advertise_until_connected_no_reply(peripheral_device):
-    with pytest.raises(TimeoutError):
+    with pytest.raises(asyncio.TimeoutError):
         await asyncio.wait_for(advertise_until_connected(peripheral_device), timeout=1.0)
 
 

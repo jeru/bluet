@@ -61,7 +61,7 @@ async def test_scan_and_connect_normal(peripheral_device, central_device):
 async def test_scan_and_connect_no_auth_req(peripheral_device, central_device):
     await peripheral_device.start_advertising()
     conn, auth_req = await scan_and_connect(central_device)
-    with pytest.raises(TimeoutError):
+    with pytest.raises(asyncio.TimeoutError):
         await asyncio.wait_for(auth_req, timeout=1.0)
     assert conn.self_address == central_device.random_address
     assert conn.peer_address == peripheral_device.random_address
