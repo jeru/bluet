@@ -17,6 +17,7 @@ from __future__ import annotations
 import asyncio.subprocess
 import errno
 import os.path
+import socket
 import sys
 from typing import TYPE_CHECKING
 
@@ -25,7 +26,7 @@ from bumble.transport.tcp_server import open_tcp_server_transport
 from bluet.process import BumbledProcess
 
 if TYPE_CHECKING:
-    from typing import Awaitable
+    from collections.abc import Awaitable
 
     from bumble.link import LocalLink
     from bumble.transport.common import Transport
@@ -35,10 +36,20 @@ def _open_transport(*arg) -> Awaitable[Transport]:
     return open_tcp_server_transport(*arg)
 
 
+def _open_transport_with_sock(*arg) -> Awaitable[Transport]:
+    return open_tcp_server_transport(*arg)
+
+
+def _open_sock_with_unused_port() -> socket.socket:
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(("localhost", 0))  # Pick an unused port.
+    return sock
+
+
 def create_bumbled_process_for_zephyr(
     controller_name: str,
     link: LocalLink,
-    port: int,
+    port: int | None = None,
     zephyr_program: str | None = None,
     extra_program_args: list[str] | None = None,
 ) -> BumbledProcess:
@@ -48,18 +59,21 @@ def create_bumbled_process_for_zephyr(
     compiles in the whole bluetooth software stack EXCLUDING the controller.
     It has a flag '--bt-dev=...' to designate either a TCP server or a USB
     device. This function will make a bumble controller on the TCP server end,
-    and let the zephyr binary act as the TCP client.
+    and let the zephyr binary act as the TCP client. It is more recommended to
+    leave the argument `port` empty so an unused port can be picked, to ease
+    parallelizing tests.
 
     If argument `zephyr_program` is not explicitly given, one will be searched
     for, assuming the pytest command is initiated by `west twister`.
-
-    TODO: remove explicit `port` and use the `socket` library to open a socket
-    with an arbitrary unused port. Pending on
-        https://github.com/google/bumble/pull/435
     """
     if zephyr_program is None:
         zephyr_program = find_zephyr_binary_from_env()
-    transport = _open_transport(f"_:{port}")
+    if port is None:
+        sock = _open_sock_with_unused_port()
+        port = sock.getsockname()[1]
+        transport = _open_transport_with_sock(sock)
+    else:
+        transport = _open_transport(f"_:{port}")
     process = asyncio.create_subprocess_exec(
         zephyr_program,
         f"--bt-dev=127.0.0.1:{port}",

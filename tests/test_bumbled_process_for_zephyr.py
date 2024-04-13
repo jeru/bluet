@@ -83,6 +83,26 @@ async def test_create_bumbled_process_for_zephyr_normal(fake_process):
 
 
 @pytest.mark.asyncio
+async def test_create_bumbled_process_for_zephyr_normal_no_port(fake_process):
+    fake_process.register([fake_process.any()])
+    socks_used = []
+
+    def mock_open_side_effect(sock):
+        socks_used.append(sock)
+        return open_pty_transport("")
+
+    with patch("bluet.process_zephyr._open_transport_with_sock", side_effect=mock_open_side_effect) as mock_open:
+        # Important: no `port` argument is given.
+        process = create_bumbled_process_for_zephyr("test-name", link=LocalLink(), zephyr_program="fake-command")
+    mock_open.assert_called_once()
+    assert len(socks_used) == 1
+    port = socks_used[0].getsockname()[1]
+    async with process:
+        pass
+    assert ["fake-command", f"--bt-dev=127.0.0.1:{port}"] in fake_process.calls, f"Actually: {fake_process.calls!s}"
+
+
+@pytest.mark.asyncio
 async def test_create_bumbled_process_for_zephyr_extra_args(fake_process):
     fake_process.register([fake_process.any()])
     with _patch_open_transport():

@@ -23,7 +23,7 @@ from bumble.controller import Controller
 
 if TYPE_CHECKING:
     from asyncio.subprocess import Process
-    from typing import Awaitable
+    from collections.abc import Awaitable
 
     from bumble.link import LocalLink
     from bumble.transport import Transport
